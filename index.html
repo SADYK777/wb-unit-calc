@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Калькулятор юнит-экономики WB</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Скрипт Telegram Mini App (не мешает обычному сайту) -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #111827;
+      --accent: #6366f1;
+      --accent-soft: rgba(99, 102, 241, 0.15);
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --success: #22c55e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
+    .app {
+      width: 100%;
+      max-width: 520px;
+    }
+    .card {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.9));
+      border-radius: 18px;
+      padding: 18px 16px 20px;
+      box-shadow: 0 24px 80px rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    h1 {
+      font-size: 20px;
+      margin: 0 0 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .badge {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: #c7d2fe;
+      border: 1px solid rgba(129, 140, 248, 0.9);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    @media (min-width: 640px) {
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+    }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 6px;
+    }
+    label {
+      color: #e5e7eb;
+    }
+    .hint {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    input, select {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 9px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(129, 140, 248, 0.5);
+    }
+    .section-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 10px 0 6px;
+    }
+    .results {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .result-card {
+      background: radial-gradient(circle at top left, rgba(129, 140, 248, 0.18), rgba(15, 23, 42, 0.98));
+      border-radius: 14px;
+      padding: 10px 10px 9px;
+      border: 1px solid rgba(129, 140, 248, 0.4);
+    }
+    .result-title {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .result-value {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .result-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .result-value.negative {
+      color: var(--danger);
+    }
+    .result-value.positive {
+      color: var(--success);
+    }
+    .summary {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .summary span {
+      padding-right: 8px;
+    }
+    .footer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .btn-main {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-main:active {
+      transform: translateY(1px);
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="card">
+      <h1>
+        <span>Юнит‑экономика WB</span>
+        <span class="badge">β‑версия • калькулятор</span>
+      </h1>
+      <div class="subtitle">
+        Введите параметры товара и посмотрите прибыль с учётом комиссий, выкупа, хранения и налогов.
+      </div>
+
+      <!-- Блок: цена и спрос -->
+      <div class="section-title">Базовые параметры</div>
+      <div class="grid grid-2">
+        <div class="field">
+          <div class="label-row">
+            <label for="price">Цена продажи, ₽</label>
+          </div>
+          <input id="price" type="number" min="0" step="0.01" value="1000" />
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label for="buyout">Процент выкупа, %</label>
+          </div>
+          <input id="buyout" type="number" min="1" max="100" step="1" value="80" />
+        </div>
+      </div>
+
+      <!-- Блок: себестоимость и логистика -->
+      <div class="section-title">Себестоимость и логистика</div>
+      <div class="grid grid-2">
+        <div class="field">
+          <div class="label-row">
+            <label for="cost">Закупка на 1 шт., ₽</label>
+          </div>
+          <input id="cost" type="number" min="0" step="0.01" value="300" />
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label for="ship">Логистика WB (в среднем на 1 шт.), ₽</label>
+          </div>
+          <input id="ship" type="number" min="0" step="0.01" value="80" />
+          <div class="hint">С учётом возвратов, если знаешь среднее значение.</div>
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label for="storage">Хранение на складе, ₽/шт. за период</label>
+          </div>
+          <input id="storage" type="number" min="0" step="0.01" value="10" />
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label for="other">Прочие расходы на 1 шт., ₽</label>
+          </div>
+          <input id="other" type="number" min="0" step="0.01" value="20" />
+          <div class="hint">Упаковка, стикеры, доп. услуги и т.п.</div>
+        </div>
+      </div>
+
+      <!-- Блок: комиссии и реклама -->
+      <div class="section-title">Комиссия и реклама</div>
+      <div class="grid grid-2">
+        <div class="field">
+          <div class="label-row">
+            <label for="wbFee">Комиссия WB, %</label>
+          </div>
+          <input id="wbFee" type="number" min="0" max="60" step="0.1" value="15" />
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label for="ads">ДРР (расходы на рекламу), % от выручки</label>
+          </div>
+          <input id="ads" type="number" min="0" max="100" step="0.1" value="10" />
+        </div>
+      </div>
+
+      <!-- Блок: налоги -->
+      <div class="section-title">Налоговый режим</div>
+      <div class="grid">
+        <div class="field">
+          <div class="label-row">
+            <label for="taxMode">Режим</label>
+          </div>
+          <select id="taxMode">
+            <option value="self_4">Самозанятый 4% (физлица)</option>
+            <option value="self_6">Самозанятый 6% (юрлица)</option>
+            <option value="usn6" selected>ИП УСН 6% «доходы»</option>
+            <option value="usn15">ИП УСН 15% «доходы‑расходы»</option>
+            <option value="custom">Своя ставка, % от дохода</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="label-row">
+            <label for="customTax">Своя ставка налога, %</label>
+          </div>
+          <input id="customTax" type="number" min="0" max="100" step="0.1" value="0" />
+          <div class="hint">Используется только если выбран режим «Своя ставка».</div>
+        </div>
+      </div>
+
+      <!-- Результаты -->
+      <div class="results">
+        <div class="result-card">
+          <div class="result-title">Себестоимость, ₽ / шт.</div>
+          <div id="cogs" class="result-value">0</div>
+          <div class="result-note">С учётом логистики, хранения и прочих расходов.</div>
+        </div>
+        <div class="result-card">
+          <div class="result-title">Налог, ₽ / шт.</div>
+          <div id="tax" class="result-value">0</div>
+          <div class="result-note">По выбранному режиму налогообложения.</div>
+        </div>
+        <div class="result-card">
+          <div class="result-title">Прибыль, ₽ / шт.</div>
+          <div id="profit" class="result-value">0</div>
+          <div class="result-note">После всех расходов и налога.</div>
+        </div>
+        <div class="result-card">
+          <div class="result-title">Маржа, %</div>
+          <div id="margin" class="result-value">0%</div>
+          <div class="result-note">Прибыль / цена продажи.</div>
+        </div>
+      </div>
+
+      <div class="summary" id="summaryText"></div>
+
+      <div class="footer-row">
+        <span>Измени любое поле — расчёт обновится.</span>
+        <button class="btn-main" type="button" id="btnRecalc">
+          Пересчитать
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function getNumber(id) {
+      const el = document.getElementById(id);
+      const v = parseFloat(el.value.replace(",", "."));
+      return isNaN(v) ? 0 : v;
+    }
+
+    function formatMoney(x) {
+      return x.toFixed(0);
+    }
+
+    function formatPercent(x) {
+      return x.toFixed(1) + "%";
+    }
+
+    function calc() {
+      const price = getNumber("price");
+      const buyoutPercent = getNumber("buyout");
+      const cost = getNumber("cost");
+      const shipBase = getNumber("ship");
+      const storage = getNumber("storage");
+      const other = getNumber("other");
+      const wbFeePercent = getNumber("wbFee");
+      const adsPercent = getNumber("ads");
+      const taxMode = document.getElementById("taxMode").value;
+      const customTax = getNumber("customTax");
+
+      const buyout = Math.min(Math.max(buyoutPercent, 1), 100) / 100;
+      const effShip = shipBase / buyout; // логистика на выкупленный товар с учётом невылкупа
+
+      const wbFee = (price * wbFeePercent) / 100;
+      const adsCost = (price * adsPercent) / 100;
+
+      const cogs = cost + effShip + storage + other + wbFee + adsCost;
+
+      let taxRate = 0;
+      if (taxMode === "self_4") taxRate = 4;
+      else if (taxMode === "self_6") taxRate = 6;
+      else if (taxMode === "usn6") taxRate = 6;
+      else if (taxMode === "usn15") taxRate = 15;
+      else if (taxMode === "custom") taxRate = customTax;
+
+      let tax = 0;
+      if (taxMode === "usn15") {
+        const taxBase = Math.max(price - cogs, 0);
+        tax = (taxBase * taxRate) / 100;
+      } else {
+        tax = (price * taxRate) / 100;
+      }
+
+      const totalCost = cogs + tax;
+      const profit = price - totalCost;
+      const margin = price > 0 ? (profit / price) * 100 : 0;
+
+      const cogsEl = document.getElementById("cogs");
+      const taxEl = document.getElementById("tax");
+      const profitEl = document.getElementById("profit");
+      const marginEl = document.getElementById("margin");
+
+      cogsEl.textContent = formatMoney(cogs);
+      taxEl.textContent = formatMoney(tax);
+      profitEl.textContent = formatMoney(profit);
+      marginEl.textContent = formatPercent(margin);
+
+      profitEl.classList.remove("negative", "positive");
+      marginEl.classList.remove("negative", "positive");
+      if (profit < 0) {
+        profitEl.classList.add("negative");
+        marginEl.classList.add("negative");
+      } else {
+        profitEl.classList.add("positive");
+        marginEl.classList.add("positive");
+      }
+
+      const summary = document.getElementById("summaryText");
+      summary.textContent =
+        "Эффективная логистика с учётом выкупа: ~" +
+        formatMoney(effShip) +
+        " ₽ на выкупленный товар. Комиссия WB: " +
+        wbFeePercent.toFixed(1) +
+        "%, реклама: " +
+        adsPercent.toFixed(1) +
+        "% от выручки.";
+    }
+
+    const inputs = document.querySelectorAll("input, select");
+    inputs.forEach((el) => {
+      el.addEventListener("input", calc);
+      el.addEventListener("change", calc);
+    });
+    document.getElementById("btnRecalc").addEventListener("click", calc);
+
+    calc();
+  </script>
+</body>
+</html>
