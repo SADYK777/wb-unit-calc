@@ -187,22 +187,38 @@
         Введите параметры товара и посмотрите прибыль с учётом комиссий, выкупа, хранения и налогов.
       </div>
 
-      <!-- Блок: цена и спрос -->
-      <div class="section-title">Базовые параметры</div>
-      <div class="grid grid-2">
-        <div class="field">
-          <div class="label-row">
-            <label for="price">Цена продажи, ₽</label>
-          </div>
-          <input id="price" type="number" min="0" step="0.01" value="1000" />
-        </div>
-        <div class="field">
-          <div class="label-row">
-            <label for="buyout">Процент выкупа, %</label>
-          </div>
-          <input id="buyout" type="number" min="1" max="100" step="1" value="80" />
-        </div>
-      </div>
+      <!-- Блок: цены и спрос -->
+<div class="section-title">Цены и спрос</div>
+<div class="grid grid-2">
+  <div class="field">
+    <div class="label-row">
+      <label for="basePrice">Цена без скидки, ₽</label>
+    </div>
+    <input id="basePrice" type="number" min="0" step="0.01" value="1200" />
+    <div class="hint">Базовая цена (зачёркнутая).</div>
+  </div>
+  <div class="field">
+    <div class="label-row">
+      <label for="sellerPrice">Цена со скидкой продавца, ₽</label>
+    </div>
+    <input id="sellerPrice" type="number" min="0" step="0.01" value="1000" />
+    <div class="hint">Цена, от которой считаются комиссии и выплаты.</div>
+  </div>
+  <div class="field">
+    <div class="label-row">
+      <label for="sppPrice">Цена с СПП, ₽</label>
+    </div>
+    <input id="sppPrice" type="number" min="0" step="0.01" value="950" />
+    <div class="hint">Фактическая цена для покупателя (с учётом СПП).</div>
+  </div>
+  <div class="field">
+    <div class="label-row">
+      <label for="buyout">Процент выкупа, %</label>
+    </div>
+    <input id="buyout" type="number" min="1" max="100" step="1" value="80" />
+  </div>
+</div>
+
 
       <!-- Блок: себестоимость и логистика -->
       <div class="section-title">Себестоимость и логистика</div>
@@ -327,8 +343,14 @@
     }
 
     function calc() {
-      const price = getNumber("price");
-      const buyoutPercent = getNumber("buyout");
+      const basePrice = getNumber("basePrice");
+const sellerPrice = getNumber("sellerPrice");
+const sppPrice = getNumber("sppPrice");
+const buyoutPercent = getNumber("buyout");
+
+// Для расчётов берём цену со скидкой продавца
+const price = sellerPrice;
+
       const cost = getNumber("cost");
       const shipBase = getNumber("ship");
       const storage = getNumber("storage");
@@ -407,3 +429,4 @@
   </script>
 </body>
 </html>
+
